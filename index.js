@@ -60,12 +60,83 @@ app.post('/student', (req, res) => {
       });
     });
   });
+
 });
 
 
 app.get('/student/:id', (req,res) => {
+  pool.connect((err, client, done) => {
   const id = req.params.id;
-  res.send(`Student ${id} profile`);
+  const query = `SELECT * FROM students where id=${id}`;
+  client.query(query, (error, result) => {
+    done();
+    if (error) {
+      res.status(400).json({error})
+    } 
+    if(result.rows < '1') {
+      res.status(404).send({
+      status: 'Failed',
+      message: 'No student information found',
+      });
+    } else {
+      res.status(200).send({
+      status: 'Successful',
+      message: 'Students Information retrieved',
+      students: result.rows,
+      });
+    }
+  });
+});
+});
+
+
+app.post('/student/update/:id', (req, res) => {
+  const data = {
+    name : req.body.studentName,
+    age : req.body.studentAge,
+    classroom : req.body.studentClass,
+    parents : req.body.parentContact,
+    admission : req.body.admissionDate,
+  }
+  
+  pool.connect((err, client, done) => {
+    const id = req.params.id;
+    const query = `UPDATE students set student_name=$1 ,student_age=$2,student_class=$3,parent_contact=$4, admission_date=$5 where id=${id}`;
+    const values = [data.name, data.age, data.classroom, data.parents, data.admission];
+
+    client.query(query, values, (error, result) => {
+      done();
+      if (error) {
+        res.status(400).json({error});
+      }
+      res.status(202).send({
+        status: 'SUccessful Update',
+        result: result.rows[0],
+      });
+    });
+  });
+
+});
+
+
+app.delete('/delstudent/:id', (req,res) => {
+  pool.connect((err, client, done) => {
+  const id = req.params.id;
+  const query = `DELETE FROM students where id=${id}`;
+  client.query(query, (error, result) => {
+    done();
+    if (error) {
+      res.status(400).json({error})
+    } 
+    else {
+      res.status(200).send({
+      status: 'Successful',
+      message: 'Students Information remove',
+      students: result.rows,
+      });
+    }
+  });
+});
 });
 
 
